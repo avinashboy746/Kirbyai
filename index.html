@@ -1,482 +1,1439 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirby AI</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0b0f19;
-            --panel-bg: #161f30;
-            --accent-color: #00f2fe;
-            --accent-gradient: linear-gradient(135deg, #00c6ff 0%, #00f2fe 100%);
-            --text-color: #e2e8f0;
-            --text-dim: #94a3b8;
-            --bot-msg: #1e293b;
-            --user-msg: #0284c7;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<title>Kirby AI</title>
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+<link id="favicon" rel="icon" href="">
 
-        /* Top Bar Header */
-        header {
-            background: var(--panel-bg);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-        .brand {
-            font-size: 1.2rem;
-            font-weight: bold;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+<style>
 
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+:root{
+    --bg:#080b12;
+    --panel:#111827;
+    --panel2:#0d1422;
+    --accent:#00e5ff;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --bot:#1e293b;
+    --user:#087ea4;
+    --border:rgba(255,255,255,.09);
+}
 
-        .model-select {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: var(--text-color);
-            padding: 6px 10px;
-            border-radius: 8px;
-            outline: none;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,Segoe UI,sans-serif;
+}
 
-        .btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: var(--text-color);
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-        }
+body{
+    height:100vh;
+    overflow:hidden;
+    background:var(--bg);
+    color:var(--text);
+}
 
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-        }
+/* HEADER */
 
-        /* API Settings Bar */
-        .api-bar {
-            background: #0f172a;
-            padding: 8px 20px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
+header{
+    height:64px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 16px;
+}
 
-        .api-bar input {
-            flex: 1;
-            background: var(--bg-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 12px;
-            color: var(--text-color);
-            border-radius: 6px;
-            outline: none;
-            font-size: 0.85rem;
-        }
+.brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
 
-        /* Chat Window */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+.brand img{
+    width:42px;
+    height:42px;
+    border-radius:11px;
+    object-fit:cover;
+}
 
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            animation: fadeIn 0.2s ease-in-out;
-        }
+.brand-name{
+    font-size:17px;
+    font-weight:bold;
+}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+.brand-tagline{
+    color:var(--muted);
+    font-size:11px;
+    margin-top:2px;
+}
 
-        .message.user {
-            align-self: flex-end;
-            background: var(--user-msg);
-            color: #fff;
-            border-bottom-right-radius: 2px;
-        }
+.header-right{
+    display:flex;
+    gap:8px;
+}
 
-        .message.bot {
-            align-self: flex-start;
-            background: var(--bot-msg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-bottom-left-radius: 2px;
-        }
+.header-btn{
+    height:38px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    border-radius:9px;
+    padding:0 12px;
+    cursor:pointer;
+}
 
-        .message img {
-            max-width: 240px;
-            border-radius: 8px;
-            margin-top: 8px;
-            display: block;
-        }
+.header-btn:hover{
+    background:rgba(255,255,255,.13);
+}
 
-        .msg-footer {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 6px;
-        }
+/* CHAT */
 
-        .speak-btn {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+.chat{
+    height:calc(100vh - 176px);
+    overflow-y:auto;
+    padding:20px;
+}
 
-        .speak-btn:hover {
-            color: var(--accent-color);
-        }
+.messages{
+    max-width:900px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
 
-        /* Input Control Panel */
-        .input-container {
-            background: var(--panel-bg);
-            padding: 12px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+.message{
+    max-width:82%;
+    padding:12px 15px;
+    border-radius:14px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-break:break-word;
+}
 
-        .preview-area {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+.message.bot{
+    align-self:flex-start;
+    background:var(--bot);
+    border:1px solid var(--border);
+    border-bottom-left-radius:4px;
+}
 
-        .preview-area img {
-            height: 45px;
-            border-radius: 6px;
-        }
+.message.user{
+    align-self:flex-end;
+    background:var(--user);
+    color:#fff;
+    border-bottom-right-radius:4px;
+}
 
-        .remove-img {
-            color: #ef4444;
-            cursor: pointer;
-        }
+.message-image{
+    max-width:300px;
+    max-height:300px;
+    display:block;
+    border-radius:10px;
+    margin-bottom:8px;
+}
 
-        .input-box {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+.message-tools{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:7px;
+}
 
-        .input-box textarea {
-            flex: 1;
-            background: var(--bg-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-            padding: 10px 14px;
-            border-radius: 10px;
-            resize: none;
-            height: 44px;
-            outline: none;
-            font-size: 0.9rem;
-        }
+.listen-btn{
+    border:0;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:12px;
+}
 
-        .icon-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: none;
-            color: var(--text-color);
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-        }
+.listen-btn:hover{
+    color:var(--accent);
+}
 
-        .icon-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-        }
+/* BOTTOM */
 
-        .icon-btn.recording {
-            background: #ef4444;
-        }
+.bottom{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    padding:10px 14px;
+}
 
-        .send-btn {
-            background: var(--accent-gradient);
-            color: #000;
-            font-weight: bold;
-        }
+.composer{
+    max-width:900px;
+    margin:auto;
+}
 
-        .privacy-note {
-            text-align: center;
-            font-size: 0.72rem;
-            color: var(--text-dim);
-        }
-    </style>
+.preview{
+    display:none;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+.preview img{
+    width:55px;
+    height:55px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+.remove-image{
+    width:27px;
+    height:27px;
+    border:0;
+    border-radius:50%;
+    background:#ef4444;
+    color:white;
+    cursor:pointer;
+}
+
+.input-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.icon-btn{
+    width:43px;
+    height:43px;
+    flex-shrink:0;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    cursor:pointer;
+}
+
+.icon-btn:hover{
+    background:rgba(255,255,255,.14);
+}
+
+.send{
+    background:var(--accent);
+    color:#001014;
+    border:0;
+}
+
+.recording{
+    background:#ef4444!important;
+}
+
+textarea{
+    flex:1;
+    height:43px;
+    resize:none;
+    outline:none;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--bg);
+    color:var(--text);
+    padding:11px 13px;
+    font-size:14px;
+}
+
+.privacy{
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    margin-top:7px;
+}
+
+/* SETTINGS */
+
+.overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.7);
+    z-index:100;
+}
+
+.settings{
+    position:absolute;
+    right:0;
+    top:0;
+    width:min(400px,94%);
+    height:100%;
+    background:#111827;
+    padding:20px;
+    overflow-y:auto;
+    box-shadow:-10px 0 40px rgba(0,0,0,.5);
+}
+
+.settings-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.close{
+    background:none;
+    border:0;
+    color:white;
+    font-size:24px;
+    cursor:pointer;
+}
+
+.setting{
+    margin-bottom:15px;
+}
+
+.setting label{
+    display:block;
+    color:var(--muted);
+    font-size:12px;
+    margin-bottom:6px;
+}
+
+.setting input,
+.setting select{
+    width:100%;
+    height:40px;
+    background:#080b12;
+    color:white;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0 10px;
+    outline:none;
+}
+
+.color-row{
+    display:flex;
+    gap:8px;
+}
+
+.color-row input[type=color]{
+    width:55px;
+    padding:3px;
+}
+
+.save-settings{
+    width:100%;
+    height:43px;
+    border:0;
+    border-radius:9px;
+    background:var(--accent);
+    color:#001014;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+    header{
+        padding:8px 10px;
+    }
+
+    .brand-tagline{
+        display:none;
+    }
+
+    .header-btn span{
+        display:none;
+    }
+
+    .chat{
+        padding:12px 10px;
+    }
+
+    .message{
+        max-width:92%;
+    }
+
+}
+
+</style>
 </head>
+
 <body>
 
-    <!-- Header -->
-    <header>
-        <div class="brand">
-            <i class="fa-solid fa-robot"></i> Kirby AI
-        </div>
-        <div class="header-controls">
-            <!-- Custom Model Switcher (Hidden Real Names) -->
-            <select id="modelSelector" class="model-select">
-                <option value="gemini-1.5-flash">Kirby AI Standard (Fast)</option>
-                <option value="gemini-1.5-pro">Kirby AI Pro (Advanced)</option>
-            </select>
-            <button class="btn" onclick="startNewChat()"><i class="fa-solid fa-plus"></i> New Chat</button>
-        </div>
-    </header>
+<!-- HEADER -->
 
-    <!-- API Key Input Bar -->
-    <div class="api-bar">
-        <i class="fa-solid fa-key" style="color: var(--accent-color);"></i>
-        <input type="password" id="apiKeyInput" placeholder="Enter API Key to start chatting..." onchange="saveApiKey()">
+<header>
+
+    <div class="brand">
+
+        <img id="logo" src="" alt="Logo">
+
+        <div>
+
+            <div class="brand-name" id="appName">
+                Kirby AI
+            </div>
+
+            <div class="brand-tagline" id="tagline">
+                Your AI Assistant
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- Main Chat Window -->
-    <div class="chat-container" id="chatContainer"></div>
 
-    <!-- Bottom Input Controls -->
-    <div class="input-container">
-        <div class="preview-area" id="previewArea" style="display: none;">
-            <img id="imagePreview" src="" alt="Preview">
-            <i class="fa-solid fa-xmark remove-img" onclick="removeImage()"></i>
+    <div class="header-right">
+
+        <button
+            class="header-btn"
+            id="newChatButton"
+            onclick="newChat()">
+
+            <i class="fa-solid fa-plus"></i>
+
+            <span> New Chat</span>
+
+        </button>
+
+
+        <button
+            class="header-btn"
+            onclick="openSettings()">
+
+            <i class="fa-solid fa-gear"></i>
+
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- CHAT -->
+
+<main class="chat" id="chatArea">
+
+    <div
+        class="messages"
+        id="messages">
+    </div>
+
+</main>
+
+
+<!-- INPUT -->
+
+<div class="bottom">
+
+    <div class="composer">
+
+        <div
+            class="preview"
+            id="preview">
+
+            <img
+                id="previewImage"
+                src="">
+
+            <button
+                class="remove-image"
+                onclick="removeImage()">
+
+                ×
+
+            </button>
+
         </div>
-        <div class="input-box">
-            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-            <button class="icon-btn" onclick="document.getElementById('imageInput').click()" title="Attach Image">
+
+
+        <div class="input-row">
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/*"
+                hidden>
+
+
+            <button
+                class="icon-btn"
+                onclick="document.getElementById('imageInput').click()"
+                title="Image">
+
                 <i class="fa-solid fa-image"></i>
+
             </button>
-            <button class="icon-btn" id="micBtn" onclick="toggleVoiceInput()" title="Voice Input">
+
+
+            <button
+                class="icon-btn"
+                id="micButton"
+                onclick="toggleVoice()"
+                title="Voice">
+
                 <i class="fa-solid fa-microphone"></i>
+
             </button>
-            <textarea id="userInput" placeholder="Ask Kirby AI..." onkeydown="handleKeyPress(event)"></textarea>
-            <button class="icon-btn send-btn" onclick="sendMessage()">
+
+
+            <textarea
+                id="prompt"
+                placeholder="Ask Kirby AI..."
+                onkeydown="handleEnter(event)">
+            </textarea>
+
+
+            <button
+                class="icon-btn send"
+                onclick="sendMessage()"
+                title="Send">
+
                 <i class="fa-solid fa-paper-plane"></i>
+
             </button>
+
         </div>
-        <div class="privacy-note">
-            🔒 Private Session Active • Messages stored locally in browser
+
+
+        <div class="privacy">
+            🔒 Private Session • Chat history is stored locally
         </div>
+
     </div>
 
-    <script>
-        let currentImageBase64 = null;
-        let recognition = null;
-        let isRecording = false;
+</div>
 
-        window.onload = () => {
-            const savedKey = localStorage.getItem('kirby_api_key');
-            if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
-            
-            loadChatHistory();
-            setupSpeechRecognition();
+
+<!-- SETTINGS PANEL -->
+
+<div
+    class="overlay"
+    id="settingsOverlay">
+
+    <div class="settings">
+
+        <div class="settings-head">
+
+            <h2>Settings</h2>
+
+            <button
+                class="close"
+                onclick="closeSettings()">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Website Name</label>
+
+            <input
+                id="settingName"
+                placeholder="Kirby AI">
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Website Tagline</label>
+
+            <input
+                id="settingTagline"
+                placeholder="Your AI Assistant">
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Logo URL</label>
+
+            <input
+                id="settingLogo"
+                placeholder="https://example.com/logo.png">
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Gemini Model</label>
+
+            <select id="settingModel">
+
+                <option value="gemini-3.1-flash-lite">
+                    Gemini 3.1 Flash-Lite
+                </option>
+
+                <option value="gemini-3-flash-preview">
+                    Gemini 3 Flash
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Background</label>
+
+            <div class="color-row">
+
+                <input
+                    type="color"
+                    id="bgColor">
+
+                <input
+                    id="bgText">
+
+            </div>
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Panel</label>
+
+            <div class="color-row">
+
+                <input
+                    type="color"
+                    id="panelColor">
+
+                <input
+                    id="panelText">
+
+            </div>
+
+        </div>
+
+
+        <div class="setting">
+
+            <label>Accent</label>
+
+            <div class="color-row">
+
+                <input
+                    type="color"
+                    id="accentColor">
+
+                <input
+                    id="accentText">
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="save-settings"
+            onclick="saveSettings()">
+
+            Save Settings
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   DEFAULT SETTINGS
+===================================================== */
+
+const DEFAULT_SETTINGS = {
+
+    name: "Kirby AI",
+
+    tagline: "Your AI Assistant",
+
+    logo: "https://placehold.co/100x100/png?text=AI",
+
+    model: "gemini-3.1-flash-lite",
+
+    bg: "#080b12",
+
+    panel: "#111827",
+
+    accent: "#00e5ff"
+
+};
+
+
+let settings =
+    JSON.parse(
+        localStorage.getItem("kirby_settings")
+    ) || DEFAULT_SETTINGS;
+
+
+let selectedImage = null;
+
+let recognition = null;
+
+let recording = false;
+
+
+/* =====================================================
+   START
+===================================================== */
+
+window.addEventListener("load",function(){
+
+    applySettings();
+
+    loadMessages();
+
+    setupVoice();
+
+    document
+        .getElementById("imageInput")
+        .addEventListener(
+            "change",
+            handleImage
+        );
+
+});
+
+
+/* =====================================================
+   APPLY SETTINGS
+===================================================== */
+
+function applySettings(){
+
+    document
+        .getElementById("appName")
+        .textContent =
+        settings.name;
+
+    document
+        .getElementById("tagline")
+        .textContent =
+        settings.tagline;
+
+    document
+        .getElementById("logo")
+        .src =
+        settings.logo;
+
+    document
+        .getElementById("favicon")
+        .href =
+        settings.logo;
+
+    document.documentElement.style
+        .setProperty(
+            "--bg",
+            settings.bg
+        );
+
+    document.documentElement.style
+        .setProperty(
+            "--panel",
+            settings.panel
+        );
+
+    document.documentElement.style
+        .setProperty(
+            "--accent",
+            settings.accent
+        );
+
+    document.title =
+        settings.name;
+
+}
+
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+
+function openSettings(){
+
+    document
+        .getElementById("settingsOverlay")
+        .style.display =
+        "block";
+
+
+    document.getElementById("settingName").value =
+        settings.name;
+
+    document.getElementById("settingTagline").value =
+        settings.tagline;
+
+    document.getElementById("settingLogo").value =
+        settings.logo;
+
+    document.getElementById("settingModel").value =
+        settings.model;
+
+    document.getElementById("bgColor").value =
+        settings.bg;
+
+    document.getElementById("bgText").value =
+        settings.bg;
+
+    document.getElementById("panelColor").value =
+        settings.panel;
+
+    document.getElementById("panelText").value =
+        settings.panel;
+
+    document.getElementById("accentColor").value =
+        settings.accent;
+
+    document.getElementById("accentText").value =
+        settings.accent;
+
+}
+
+
+function closeSettings(){
+
+    document
+        .getElementById("settingsOverlay")
+        .style.display =
+        "none";
+
+}
+
+
+function saveSettings(){
+
+    settings = {
+
+        name:
+            document.getElementById(
+                "settingName"
+            ).value.trim()
+            || "Kirby AI",
+
+        tagline:
+            document.getElementById(
+                "settingTagline"
+            ).value.trim()
+            || "Your AI Assistant",
+
+        logo:
+            document.getElementById(
+                "settingLogo"
+            ).value.trim()
+            || DEFAULT_SETTINGS.logo,
+
+        model:
+            document.getElementById(
+                "settingModel"
+            ).value,
+
+        bg:
+            document.getElementById(
+                "bgText"
+            ).value.trim()
+            || "#080b12",
+
+        panel:
+            document.getElementById(
+                "panelText"
+            ).value.trim()
+            || "#111827",
+
+        accent:
+            document.getElementById(
+                "accentText"
+            ).value.trim()
+            || "#00e5ff"
+
+    };
+
+
+    localStorage.setItem(
+        "kirby_settings",
+        JSON.stringify(settings)
+    );
+
+
+    applySettings();
+
+    closeSettings();
+
+}
+
+
+/* =====================================================
+   IMAGE
+===================================================== */
+
+function handleImage(event){
+
+    const file =
+        event.target.files[0];
+
+    if(!file)return;
+
+
+    if(!file.type.startsWith("image/")){
+
+        alert("Please select an image.");
+
+        return;
+
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+    function(e){
+
+        selectedImage = {
+
+            base64:
+                e.target.result
+                .split(",")[1],
+
+            dataUrl:
+                e.target.result,
+
+            mime:
+                file.type
+
         };
 
-        function saveApiKey() {
-            const key = document.getElementById('apiKeyInput').value.trim();
-            localStorage.setItem('kirby_api_key', key);
+
+        document
+            .getElementById("previewImage")
+            .src =
+            e.target.result;
+
+
+        document
+            .getElementById("preview")
+            .style.display =
+            "flex";
+
+    };
+
+
+    reader.readAsDataURL(file);
+
+}
+
+
+function removeImage(){
+
+    selectedImage = null;
+
+    document
+        .getElementById("imageInput")
+        .value = "";
+
+    document
+        .getElementById("preview")
+        .style.display =
+        "none";
+
+}
+
+
+/* =====================================================
+   VOICE
+===================================================== */
+
+function setupVoice(){
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if(!SpeechRecognition)return;
+
+
+    recognition =
+        new SpeechRecognition();
+
+
+    recognition.continuous =
+        false;
+
+    recognition.interimResults =
+        false;
+
+    recognition.lang =
+        "hi-IN";
+
+
+    recognition.onresult =
+    function(event){
+
+        const text =
+            event.results[0][0]
+            .transcript;
+
+
+        document
+            .getElementById("prompt")
+            .value +=
+            " " + text;
+
+
+        stopVoice();
+
+    };
+
+
+    recognition.onerror =
+        stopVoice;
+
+    recognition.onend =
+        stopVoice;
+
+}
+
+
+function toggleVoice(){
+
+    if(!recognition){
+
+        alert(
+            "Chrome browser mein voice recognition available nahi hai."
+        );
+
+        return;
+
+    }
+
+
+    if(recording){
+
+        recognition.stop();
+
+    }else{
+
+        recognition.start();
+
+        recording = true;
+
+        document
+            .getElementById("micButton")
+            .classList.add(
+                "recording"
+            );
+
+    }
+
+}
+
+
+function stopVoice(){
+
+    recording = false;
+
+    document
+        .getElementById("micButton")
+        .classList.remove(
+            "recording"
+        );
+
+}
+
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+function addMessage(
+    role,
+    text,
+    image=null
+){
+
+    const messages =
+        document
+            .getElementById("messages");
+
+
+    const div =
+        document.createElement("div");
+
+
+    div.className =
+        "message " + role;
+
+
+    if(image){
+
+        const img =
+            document.createElement("img");
+
+        img.src =
+            image;
+
+        img.className =
+            "message-image";
+
+        div.appendChild(img);
+
+    }
+
+
+    const textDiv =
+        document.createElement("div");
+
+
+    textDiv.textContent =
+        text;
+
+
+    div.appendChild(textDiv);
+
+
+    if(role === "bot"){
+
+        const tools =
+            document.createElement("div");
+
+
+        tools.className =
+            "message-tools";
+
+
+        const button =
+            document.createElement("button");
+
+
+        button.className =
+            "listen-btn";
+
+
+        button.innerHTML =
+            '<i class="fa-solid fa-volume-high"></i> Listen';
+
+
+        button.onclick =
+        function(){
+
+            speechSynthesis.cancel();
+
+            const speech =
+                new SpeechSynthesisUtterance(
+                    text
+                );
+
+            speechSynthesis.speak(
+                speech
+            );
+
+        };
+
+
+        tools.appendChild(button);
+
+        div.appendChild(tools);
+
+    }
+
+
+    messages.appendChild(div);
+
+
+    document
+        .getElementById("chatArea")
+        .scrollTop =
+        document
+            .getElementById("chatArea")
+            .scrollHeight;
+
+}
+
+
+/* =====================================================
+   SAVE CHAT
+===================================================== */
+
+function saveChat(
+    role,
+    text,
+    image=null
+){
+
+    const chats =
+        JSON.parse(
+            localStorage.getItem(
+                "kirby_messages"
+            ) || "[]"
+        );
+
+
+    chats.push({
+
+        role:role,
+
+        text:text,
+
+        image:image
+
+    });
+
+
+    localStorage.setItem(
+        "kirby_messages",
+        JSON.stringify(chats)
+    );
+
+}
+
+
+/* =====================================================
+   LOAD CHAT
+===================================================== */
+
+function loadMessages(){
+
+    const chats =
+        JSON.parse(
+            localStorage.getItem(
+                "kirby_messages"
+            ) || "[]"
+        );
+
+
+    if(!chats.length){
+
+        addMessage(
+            "bot",
+            `Namaste! Main ${settings.name} hoon. Main aapki kya madad kar sakta hoon?`
+        );
+
+        return;
+
+    }
+
+
+    chats.forEach(function(chat){
+
+        addMessage(
+            chat.role,
+            chat.text,
+            chat.image
+        );
+
+    });
+
+}
+
+
+/* =====================================================
+   NEW CHAT
+===================================================== */
+
+function newChat(){
+
+    const confirmNew =
+        confirm(
+            "Kya aap current chat delete karke New Chat start karna chahte hain?"
+        );
+
+
+    if(!confirmNew)return;
+
+
+    localStorage.removeItem(
+        "kirby_messages"
+    );
+
+
+    document
+        .getElementById("messages")
+        .innerHTML = "";
+
+
+    addMessage(
+        "bot",
+        `Nayi chat start ho gayi! Main ${settings.name} hoon.`
+    );
+
+}
+
+
+/* =====================================================
+   ENTER
+===================================================== */
+
+function handleEnter(event){
+
+    if(
+        event.key === "Enter" &&
+        !event.shiftKey
+    ){
+
+        event.preventDefault();
+
+        sendMessage();
+
+    }
+
+}
+
+
+/* =====================================================
+   SEND MESSAGE
+===================================================== */
+
+async function sendMessage(){
+
+    const input =
+        document.getElementById(
+            "prompt"
+        );
+
+
+    const text =
+        input.value.trim();
+
+
+    if(!text && !selectedImage){
+
+        return;
+
+    }
+
+
+    const imageForUI =
+        selectedImage
+        ? selectedImage.dataUrl
+        : null;
+
+
+    addMessage(
+        "user",
+        text || "Image",
+        imageForUI
+    );
+
+
+    saveChat(
+        "user",
+        text || "Image",
+        imageForUI
+    );
+
+
+    const requestBody = {
+
+        message:text,
+
+        model:settings.model
+
+    };
+
+
+    if(selectedImage){
+
+        requestBody.image = {
+
+            data:
+                selectedImage.base64,
+
+            mimeType:
+                selectedImage.mime
+
+        };
+
+    }
+
+
+    input.value = "";
+
+    removeImage();
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/chat",
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            requestBody
+                        )
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if(!response.ok){
+
+            throw new Error(
+                data.error ||
+                "Server error"
+            );
+
         }
 
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    currentImageBase64 = evt.target.result.split(',')[1];
-                    document.getElementById('imagePreview').src = evt.target.result;
-                    document.getElementById('previewArea').style.display = 'flex';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
 
-        function removeImage() {
-            currentImageBase64 = null;
-            document.getElementById('imageInput').value = '';
-            document.getElementById('previewArea').style.display = 'none';
-        }
+        const reply =
+            data.reply ||
+            "No response received.";
 
-        function setupSpeechRecognition() {
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'hi-IN';
 
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    document.getElementById('userInput').value += ' ' + transcript;
-                    stopRecording();
-                };
+        addMessage(
+            "bot",
+            reply
+        );
 
-                recognition.onerror = stopRecording;
-                recognition.onend = stopRecording;
-            }
-        }
 
-        function toggleVoiceInput() {
-            if (!recognition) return alert("Speech recognition not supported on this browser.");
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                recognition.start();
-                isRecording = true;
-                document.getElementById('micBtn').classList.add('recording');
-            }
-        }
+        saveChat(
+            "bot",
+            reply
+        );
 
-        function stopRecording() {
-            isRecording = false;
-            document.getElementById('micBtn').classList.remove('recording');
-        }
 
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                window.speechSynthesis.speak(utterance);
-            }
-        }
+    }catch(error){
 
-        function appendMessage(role, text, imgSrc = null) {
-            const container = document.getElementById('chatContainer');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${role}`;
-            
-            let content = `<div>${text}</div>`;
-            if (imgSrc) content = `<img src="${imgSrc}">${content}`;
+        addMessage(
+            "bot",
+            "❌ Error: " +
+            error.message
+        );
 
-            if (role === 'bot') {
-                content += `
-                    <div class="msg-footer">
-                        <button class="speak-btn" onclick="speakText(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`)">
-                            <i class="fa-solid fa-volume-high"></i> Listen
-                        </button>
-                    </div>`;
-            }
+    }
 
-            msgDiv.innerHTML = content;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        }
+}
 
-        function saveMessageToStorage(role, text, imgSrc = null) {
-            const history = JSON.parse(localStorage.getItem('kirby_chats') || '[]');
-            history.push({ role, text, imgSrc });
-            localStorage.setItem('kirby_chats', JSON.stringify(history));
-        }
+</script>
 
-        function loadChatHistory() {
-            const history = JSON.parse(localStorage.getItem('kirby_chats') || '[]');
-            if (history.length === 0) {
-                appendMessage('bot', 'Namaste! Main **Kirby AI** hoon. Main aapki kya madad kar sakta hoon?');
-            } else {
-                history.forEach(msg => appendMessage(msg.role, msg.text, msg.imgSrc));
-            }
-        }
-
-        function startNewChat() {
-            localStorage.removeItem('kirby_chats');
-            document.getElementById('chatContainer').innerHTML = '';
-            appendMessage('bot', 'Nayi chat start ho gayi hai! Kirby AI aapki kya madad kare?');
-        }
-
-        function handleKeyPress(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        }
-
-        async function sendMessage() {
-            const apiKey = localStorage.getItem('AQ.Ab8RN6IQVWLvKICzULnRfJUhq0JimSYxAPUZ8r7FysfQAqaREw');
-            if (!apiKey) return alert("Pehle API Key dalein!");
-
-            const inputEl = document.getElementById('userInput');
-            const prompt = inputEl.value.trim();
-            if (!prompt && !currentImageBase64) return;
-
-            const selectedModel = document.getElementById('modelSelector').value;
-            const imageSrcForUI = currentImageBase64 ? `data:image/jpeg;base64,${currentImageBase64}` : null;
-            
-            appendMessage('user', prompt, imageSrcForUI);
-            saveMessageToStorage('user', prompt, imageSrcForUI);
-
-            inputEl.value = '';
-            const tempImg = currentImageBase64;
-            removeImage();
-
-            const parts = [];
-            if (prompt) parts.push({ text: prompt });
-            if (tempImg) {
-                parts.push({
-                    inline_data: { mime_type: "image/jpeg", data: tempImg }
-                });
-            }
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts }] })
-                });
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
-
-                const botReply = data.candidates[0].content.parts[0].text;
-                appendMessage('bot', botReply);
-                saveMessageToStorage('bot', botReply);
-
-            } catch (err) {
-                appendMessage('bot', "Error: " + err.message);
-            }
-        }
-    </script>
 </body>
-  </html>
-  
+</html>
